@@ -30,7 +30,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     var window: UIWindow?
 
-    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey : Any]? = nil) -> Bool {
+    func application(application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey : Any]? = nil) -> Bool {
 
         completeIAPTransactions()
 
@@ -39,11 +39,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func completeIAPTransactions() {
 
-        SwiftyStoreKit.completeTransactions(atomically: true) { products in
+        SwiftyStoreKit.completeTransactions(true) { products in
 
             for product in products {
 
-                if product.transaction.transactionState == .purchased || product.transaction.transactionState == .restored {
+                if product.transaction.transactionState == .Purchased || product.transaction.transactionState == .Restored {
 
                     if product.needsFinishTransaction {
                         // Deliver content from server, then:

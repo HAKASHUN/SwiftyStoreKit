@@ -29,7 +29,7 @@ struct CompleteTransactions {
     let atomically: Bool
     let callback: ([Product]) -> Void
 
-    init(atomically: Bool, callback: @escaping ([Product]) -> Void) {
+    init(atomically: Bool, callback: ([Product]) -> Void) {
         self.atomically = atomically
         self.callback = callback
     }
@@ -39,7 +39,7 @@ class CompleteTransactionsController: TransactionController {
 
     var completeTransactions: CompleteTransactions?
 
-    func processTransactions(_ transactions: [SKPaymentTransaction], on paymentQueue: PaymentQueue) -> [SKPaymentTransaction] {
+    func processTransactions(transactions: [SKPaymentTransaction], on paymentQueue: PaymentQueue) -> [SKPaymentTransaction] {
 
         guard let completeTransactions = completeTransactions else {
             print("SwiftyStoreKit.completeTransactions() should be called once when the app launches.")
@@ -53,7 +53,7 @@ class CompleteTransactionsController: TransactionController {
 
             let transactionState = transaction.transactionState
 
-            if transactionState != .purchasing {
+            if transactionState != .Purchasing {
 
                 let product = Product(productId: transaction.payment.productIdentifier, transaction: transaction, needsFinishTransaction: !completeTransactions.atomically)
 

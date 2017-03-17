@@ -28,12 +28,12 @@ import Foundation
 // MARK - receipt mangement
 internal class InAppReceipt {
 
-    static var appStoreReceiptUrl: URL? {
-        return Bundle.main.appStoreReceiptURL
+    static var appStoreReceiptUrl: NSURL? {
+        return NSBundle.mainBundle().appStoreReceiptURL
     }
 
-    static var appStoreReceiptData: Data? {
-        guard let receiptDataURL = appStoreReceiptUrl, let data = try? Data(contentsOf: receiptDataURL) else {
+    static var appStoreReceiptData: NSData? {
+        guard let receiptDataURL = appStoreReceiptUrl, let data = NSData(contentsOfURL: receiptDataURL) else {
             return nil
         }
         return data
@@ -41,7 +41,7 @@ internal class InAppReceipt {
 
     // The base64 encoded receipt data.
     static var appStoreReceiptBase64Encoded: String? {
-        return appStoreReceiptData?.base64EncodedString(options: [])
+        return appStoreReceiptData?.base64EncodedStringWithOptions([])
     }
 
     // https://developer.apple.com/library/ios/releasenotes/General/ValidateAppStoreReceipt/Chapters/ValidateRemotely.html
@@ -54,15 +54,15 @@ internal class InAppReceipt {
      */
     class func verify(using validator: ReceiptValidator,
                       password autoRenewPassword: String? = nil,
-                      completion: @escaping (VerifyReceiptResult) -> Void) {
+                      completion: (VerifyReceiptResult) -> Void) {
 
         // If no receipt is present, validation fails.
         guard let base64EncodedString = appStoreReceiptBase64Encoded else {
-            completion(.error(error: .noReceiptData))
+            completion(.Error(error: .NoReceiptData))
             return
         }
 
-        validator.validate(receipt: base64EncodedString, password: autoRenewPassword, completion: completion)
+        validator.validate(base64EncodedString, password: autoRenewPassword, completion: completion)
     }
 
     /**
@@ -78,15 +78,15 @@ internal class InAppReceipt {
 
         // Get receipts info for the product
         let receipts = receipt["receipt"]?["in_app"] as? [ReceiptInfo]
-        let receiptsInfo = filterReceiptsInfo(receipts: receipts, withProductId: productId)
+        let receiptsInfo = filterReceiptsInfo(receipts, withProductId: productId)
 
         // Verify that at least one receipt has the right product id
-        return receiptsInfo.count >= 1 ? .purchased : .notPurchased
+        return receiptsInfo.count >= 1 ? .Purchased : .NotPurchased
     }
 
     /**
      *  Verify the purchase of a subscription (auto-renewable, free or non-renewing) in a receipt. This method extracts all transactions mathing the given productId and sorts them by date in descending order, then compares the first transaction expiry date against the validUntil value.
-     *  - parameter type: .autoRenewable or .nonRenewing(duration)
+     *  - parameter type: .AutoRenewable or .NonRenewing(duration)
      *  - Parameter productId: the product id of the purchase to verify
      *  - Parameter inReceipt: the receipt to use for looking up the subscription
      *  - Parameter validUntil: date to check against the expiry date of the subscription. If nil, no verification
@@ -97,17 +97,17 @@ internal class InAppReceipt {
         type: SubscriptionType,
         productId: String,
         inReceipt receipt: ReceiptInfo,
-        validUntil date: Date = Date()
+        validUntil date: NSDate = NSDate()
     ) -> VerifySubscriptionResult {
 
         // Verify that at least one receipt has the right product id
 
         // The values of the latest_receipt and latest_receipt_info keys are useful when checking whether an auto-renewable subscription is currently active. By providing any transaction receipt for the subscription and checking these values, you can get information about the currently-active subscription period. If the receipt being validated is for the latest renewal, the value for latest_receipt is the same as receipt-data (in the request) and the value for latest_receipt_info is the same as receipt.
         let (receipts, duration) = getReceiptsAndDuration(for: type, inReceipt: receipt)
-        let receiptsInfo = filterReceiptsInfo(receipts: receipts, withProductId: productId)
+        let receiptsInfo = filterReceiptsInfo(receipts, withProductId: productId)
         let nonCancelledReceiptsInfo = receiptsInfo.filter { receipt in receipt["cancellation_date"] == nil }
         if nonCancelledReceiptsInfo.count == 0 {
-            return .notPurchased
+            return .NotPurchased
         }
 
         let receiptDate = getReceiptRequestDate(inReceipt: receipt) ?? date
@@ -118,50 +118,50 @@ internal class InAppReceipt {
                 let key: String = duration != nil ? "original_purchase_date_ms" : "expires_date_ms"
                 return receipt[key] as? String
             }
-            .flatMap { (dateString) -> Date? in
+            .flatMap { (dateString) -> NSDate? in
                 guard let doubleValue = Double(dateString) else { return nil }
                 // If duration is set, create an "expires date" value calculated from the original purchase date
                 let addedDuration = duration ?? 0
                 let expiryDateDouble = (doubleValue / 1000 + addedDuration)
-                return Date(timeIntervalSince1970: expiryDateDouble)
+                return NSDate(timeIntervalSince1970: expiryDateDouble)
             }
-            .sorted { (a, b) -> Bool in
+            .sort { (a, b) -> Bool in
                 // Sort by descending date order
-                return a.compare(b) == .orderedDescending
+                return a.compare(b) == .OrderedDescending
             }
 
         guard let firstExpiryDate = expiryDateValues.first else {
-            return .notPurchased
+            return .NotPurchased
         }
 
         // Check if at least 1 receipt is valid
-        if firstExpiryDate.compare(receiptDate) == .orderedDescending {
+        if firstExpiryDate.compare(receiptDate) == .OrderedDescending {
 
             // The subscription is valid
-            return .purchased(expiryDate: firstExpiryDate)
+            return .Purchased(expiryDate: firstExpiryDate)
         } else {
             // The subscription is expired
-            return .expired(expiryDate: firstExpiryDate)
+            return .Expired(expiryDate: firstExpiryDate)
         }
     }
 
-    private class func getReceiptsAndDuration(for subscriptionType: SubscriptionType, inReceipt receipt: ReceiptInfo) -> ([ReceiptInfo]?, TimeInterval?) {
+    private class func getReceiptsAndDuration(for subscriptionType: SubscriptionType, inReceipt receipt: ReceiptInfo) -> ([ReceiptInfo]?, NSTimeInterval?) {
         switch subscriptionType {
-        case .autoRenewable:
+        case .AutoRenewable:
             return (receipt["latest_receipt_info"] as? [ReceiptInfo], nil)
-        case .nonRenewing(let duration):
+        case .NonRenewing(let duration):
             return (receipt["receipt"]?["in_app"] as? [ReceiptInfo], duration)
         }
     }
 
-    private class func getReceiptRequestDate(inReceipt receipt: ReceiptInfo) -> Date? {
+    private class func getReceiptRequestDate(inReceipt receipt: ReceiptInfo) -> NSDate? {
 
         guard let receiptInfo = receipt["receipt"] as? ReceiptInfo,
             let requestDateString = receiptInfo["request_date_ms"] as? String,
             let requestDateMs = Double(requestDateString) else {
             return nil
         }
-        return Date(timeIntervalSince1970: requestDateMs / 1000)
+        return NSDate(timeIntervalSince1970: requestDateMs / 1000)
     }
 
     /**

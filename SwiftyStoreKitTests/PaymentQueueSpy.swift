@@ -19,28 +19,28 @@ class PaymentQueueSpy: PaymentQueue {
 
     var finishTransactionCalledCount = 0
 
-    func add(_ observer: SKPaymentTransactionObserver) {
+    func addTransactionObserver(observer: SKPaymentTransactionObserver) {
 
         self.observer = observer
     }
-    func remove(_ observer: SKPaymentTransactionObserver) {
+    func removeTransactionObserver(observer: SKPaymentTransactionObserver) {
 
         if self.observer === observer {
             self.observer = nil
         }
     }
 
-    func add(_ payment: SKPayment) {
+    func addPayment(payment: SKPayment) {
 
         payments.append(payment)
     }
 
-    func restoreCompletedTransactions(withApplicationUsername username: String?) {
+    func restoreCompletedTransactionsWithApplicationUsername(username: String?) {
 
         restoreCompletedTransactionCalledCount += 1
     }
 
-    func finishTransaction(_ transaction: SKPaymentTransaction) {
+    func finishTransaction(transaction: SKPaymentTransaction) {
 
         finishTransactionCalledCount += 1
     }

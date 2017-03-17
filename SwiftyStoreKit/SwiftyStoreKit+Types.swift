@@ -35,7 +35,7 @@ public struct Product {
 
 //Conform to this protocol to provide custom receipt validator
 public protocol ReceiptValidator {
-	func validate(receipt: String, password autoRenewPassword: String?, completion: @escaping (VerifyReceiptResult) -> Void)
+	func validate(receipt: String, password autoRenewPassword: String?, completion: (VerifyReceiptResult) -> Void)
 }
 
 // Payment transaction
@@ -51,19 +51,19 @@ extension SKPaymentTransaction : PaymentTransaction { }
 public struct RetrieveResults {
     public let retrievedProducts: Set<SKProduct>
     public let invalidProductIDs: Set<String>
-    public let error: Error?
+    public let error: ErrorType?
 }
 
 // Purchase result
 public enum PurchaseResult {
-    case success(product: Product)
-    case error(error: SKError)
+    case Success(product: Product)
+    case Error(error: SKErrorCode)
 }
 
 // Restore purchase results
 public struct RestoreResults {
     public let restoredProducts: [Product]
-    public let restoreFailedProducts: [(SKError, String?)]
+    public let restoreFailedProducts: [(SKErrorCode, String?)]
 }
 
 // MARK: Receipt verification
@@ -73,126 +73,126 @@ public typealias ReceiptInfo = [String: AnyObject]
 
 // Refresh receipt result
 public enum RefreshReceiptResult {
-    case success(receiptData: Data)
-    case error(error: Error)
+    case Success(receiptData: NSData)
+    case Error(error: ErrorType)
 }
 
 // Verify receipt result
 public enum VerifyReceiptResult {
-    case success(receipt: ReceiptInfo)
-    case error(error: ReceiptError)
+    case Success(receipt: ReceiptInfo)
+    case Error(error: ReceiptError)
 }
 
 // Result for Consumable and NonConsumable
 public enum VerifyPurchaseResult {
-    case purchased
-    case notPurchased
+    case Purchased
+    case NotPurchased
 }
 
 // Verify subscription result
 public enum VerifySubscriptionResult {
-    case purchased(expiryDate: Date)
-    case expired(expiryDate: Date)
-    case notPurchased
+    case Purchased(expiryDate: NSDate)
+    case Expired(expiryDate: NSDate)
+    case NotPurchased
 }
 
 public enum SubscriptionType {
-    case autoRenewable
-    case nonRenewing(validDuration: TimeInterval)
+    case AutoRenewable
+    case NonRenewing(validDuration: NSTimeInterval)
 }
 
 // Error when managing receipt
-public enum ReceiptError: Swift.Error {
+public enum ReceiptError: Swift.ErrorType {
     // No receipt data
-    case noReceiptData
+    case NoReceiptData
     // No data receice
-    case noRemoteData
+    case NoRemoteData
     // Error when encoding HTTP body into JSON
-    case requestBodyEncodeError(error: Swift.Error)
+    case RequestBodyEncodeError(error: Swift.ErrorType)
     // Error when proceeding request
-    case networkError(error: Swift.Error)
+    case NetworkError(error: Swift.ErrorType)
     // Error when decoding response
-    case jsonDecodeError(string: String?)
+    case JsonDecodeError(string: String?)
     // Receive invalid - bad status returned
-    case receiptInvalid(receipt: ReceiptInfo, status: ReceiptStatus)
+    case ReceiptInvalid(receipt: ReceiptInfo, status: ReceiptStatus)
 }
 
 // Status code returned by remote server
 // see Table 2-1  Status codes
 public enum ReceiptStatus: Int {
     // Not decodable status
-    case unknown = -2
+    case Unknown = -2
     // No status returned
-    case none = -1
+    case None = -1
     // valid statu
-    case valid = 0
+    case Valid = 0
     // The App Store could not read the JSON object you provided.
-    case jsonNotReadable = 21000
+    case JsonNotReadable = 21000
     // The data in the receipt-data property was malformed or missing.
-    case malformedOrMissingData = 21002
+    case MalformedOrMissingData = 21002
     // The receipt could not be authenticated.
-    case receiptCouldNotBeAuthenticated = 21003
+    case ReceiptCouldNotBeAuthenticated = 21003
     // The shared secret you provided does not match the shared secret on file for your account.
-    case secretNotMatching = 21004
+    case SecretNotMatching = 21004
     // The receipt server is not currently available.
-    case receiptServerUnavailable = 21005
+    case ReceiptServerUnavailable = 21005
     // This receipt is valid but the subscription has expired. When this status code is returned to your server, the receipt data is also decoded and returned as part of the response.
-    case subscriptionExpired = 21006
+    case SubscriptionExpired = 21006
     //  This receipt is from the test environment, but it was sent to the production environment for verification. Send it to the test environment instead.
-    case testReceipt = 21007
+    case TestReceipt = 21007
     // This receipt is from the production environment, but it was sent to the test environment for verification. Send it to the production environment instead.
-    case productionEnvironment = 21008
+    case ProductionEnvironment = 21008
 
-    var isValid: Bool { return self == .valid}
+    var isValid: Bool { return self == .Valid}
 }
 
 // Receipt field as defined in : https://developer.apple.com/library/ios/releasenotes/General/ValidateAppStoreReceipt/Chapters/ReceiptFields.html#//apple_ref/doc/uid/TP40010573-CH106-SW1
 public enum ReceiptInfoField: String {
-    // Bundle Identifier. This corresponds to the value of CFBundleIdentifier in the Info.plist file.
-    case bundle_id
-    // The app’s version number.This corresponds to the value of CFBundleVersion (in iOS) or CFBundleShortVersionString (in OS X) in the Info.plist.
-    case application_version
-    // The version of the app that was originally purchased. This corresponds to the value of CFBundleVersion (in iOS) or CFBundleShortVersionString (in OS X) in the Info.plist file when the purchase was originally made.
-    case original_application_version
-    // The date when the app receipt was created.
-    case creation_date
-    // The date that the app receipt expires. This key is present only for apps purchased through the Volume Purchase Program.
-    case expiration_date
+  // Bundle Identifier. This corresponds to the value of CFBundleIdentifier in the Info.plist file.
+  case BundleId = "bundle_id"
+  // The app’s version number.This corresponds to the value of CFBundleVersion (in iOS) or CFBundleShortVersionString (in OS X) in the Info.plist.
+  case ApplicationVersion = "application_version"
+  // The version of the app that was originally purchased. This corresponds to the value of CFBundleVersion (in iOS) or CFBundleShortVersionString (in OS X) in the Info.plist file when the purchase was originally made.
+  case OriginalApplicationVersion = "original_application_version"
+  // The date when the app receipt was created.
+  case CreationDate = "creation_date"
+  // The date that the app receipt expires. This key is present only for apps purchased through the Volume Purchase Program.
+  case ExpirationDate = "expiration_date"
 
-    // The receipt for an in-app purchase.
-    case in_app
+  // The receipt for an in-app purchase.
+  case InApp = "in_app"
 
-    public enum InApp: String {
-        // The number of items purchased. This value corresponds to the quantity property of the SKPayment object stored in the transaction’s payment property.
-        case quantity
-        // The product identifier of the item that was purchased. This value corresponds to the productIdentifier property of the SKPayment object stored in the transaction’s payment property.
-        case product_id
-        // The transaction identifier of the item that was purchased. This value corresponds to the transaction’s transactionIdentifier property.
-        case transaction_id
-        // For a transaction that restores a previous transaction, the transaction identifier of the original transaction. Otherwise, identical to the transaction identifier. This value corresponds to the original transaction’s transactionIdentifier property. All receipts in a chain of renewals for an auto-renewable subscription have the same value for this field.
-        case original_transaction_id
-        // The date and time that the item was purchased. This value corresponds to the transaction’s transactionDate property.
-        case purchase_date
-        // For a transaction that restores a previous transaction, the date of the original transaction. This value corresponds to the original transaction’s transactionDate property. In an auto-renewable subscription receipt, this indicates the beginning of the subscription period, even if the subscription has been renewed.
-        case original_purchase_date
-        // The expiration date for the subscription, expressed as the number of milliseconds since January 1, 1970, 00:00:00 GMT. This key is only present for auto-renewable subscription receipts.
-        case expires_date
-        // For a transaction that was canceled by Apple customer support, the time and date of the cancellation. Treat a canceled receipt the same as if no purchase had ever been made.
-        case cancellation_date
-        #if os(iOS) || os(tvOS)
-        // A string that the App Store uses to uniquely identify the application that created the transaction. If your server supports multiple applications, you can use this value to differentiate between them. Apps are assigned an identifier only in the production environment, so this key is not present for receipts created in the test environment. This field is not present for Mac apps. See also Bundle Identifier.
-        case app_item_id
-        #endif
-        // An arbitrary number that uniquely identifies a revision of your application. This key is not present for receipts created in the test environment.
-        case version_external_identifier
-        // The primary key for identifying subscription purchases.
-        case web_order_line_item_id
-    }
+  public enum InAppField: String {
+    // The number of items purchased. This value corresponds to the quantity property of the SKPayment object stored in the transaction’s payment property.
+    case Quantity = "quantity"
+    // The product identifier of the item that was purchased. This value corresponds to the productIdentifier property of the SKPayment object stored in the transaction’s payment property.
+    case ProductId = "product_id"
+    // The transaction identifier of the item that was purchased. This value corresponds to the transaction’s transactionIdentifier property.
+    case TransactionId = "transaction_id"
+    // For a transaction that restores a previous transaction, the transaction identifier of the original transaction. Otherwise, identical to the transaction identifier. This value corresponds to the original transaction’s transactionIdentifier property. All receipts in a chain of renewals for an auto-renewable subscription have the same value for this field.
+    case OriginalTransactionId = "original_transaction_id"
+    // The date and time that the item was purchased. This value corresponds to the transaction’s transactionDate property.
+    case PurchaseDate = "purchase_date"
+    // For a transaction that restores a previous transaction, the date of the original transaction. This value corresponds to the original transaction’s transactionDate property. In an auto-renewable subscription receipt, this indicates the beginning of the subscription period, even if the subscription has been renewed.
+    case OriginalPurchaseDate = "original_purchase_date"
+    // The expiration date for the subscription, expressed as the number of milliseconds since January 1, 1970, 00:00:00 GMT. This key is only present for auto-renewable subscription receipts.
+    case ExpiresDate = "expires_date"
+    // For a transaction that was canceled by Apple customer support, the time and date of the cancellation. Treat a canceled receipt the same as if no purchase had ever been made.
+    case CancellationDate = "cancellation_date"
+    #if os(iOS) || os(tvOS)
+    // A string that the App Store uses to uniquely identify the application that created the transaction. If your server supports multiple applications, you can use this value to differentiate between them. Apps are assigned an identifier only in the production environment, so this key is not present for receipts created in the test environment. This field is not present for Mac apps. See also Bundle Identifier.
+    case AppItemId = "app_item_id"
+    #endif
+    // An arbitrary number that uniquely identifies a revision of your application. This key is not present for receipts created in the test environment.
+    case VersionExternalIdentifier = "version_external_identifier"
+    // The primary key for identifying subscription purchases.
+    case WebOrderLineItemId = "web_order_line_item_id"
+  }
 }
 
 #if os(OSX)
     public enum ReceiptExitCode: Int32 {
         // If validation fails in OS X, call exit with a status of 173. This exit status notifies the system that your application has determined that its receipt is invalid. At this point, the system attempts to obtain a valid receipt and may prompt for the user’s iTunes credentials
-        case notValid = 173
+        case NotValid = 173
     }
 #endif

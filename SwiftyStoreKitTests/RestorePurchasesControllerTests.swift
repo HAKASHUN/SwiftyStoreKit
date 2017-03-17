@@ -33,21 +33,21 @@ class RestorePurchasesControllerTests: XCTestCase {
         let productIdentifier = "com.SwiftyStoreKit.product1"
         let testProduct = TestProduct(productIdentifier: productIdentifier)
 
-        let transaction = TestPaymentTransaction(payment: SKPayment(product: testProduct), transactionState: .restored)
+        let transaction = TestPaymentTransaction(payment: SKPayment(product: testProduct), transactionState: .Restored)
 
         var callbackCalled = false
         let restorePurchases = RestorePurchases(atomically: true) { results in
             callbackCalled = true
             XCTAssertEqual(results.count, 1)
             let restored = results.first!
-            if case .restored(let restoredProduct) = restored {
+            if case .Restored(let restoredProduct) = restored {
                 XCTAssertEqual(restoredProduct.productId, productIdentifier)
             } else {
                 XCTFail("expected restored callback with product")
             }
         }
 
-        let restorePurchasesController = makeRestorePurchasesController(restorePurchases: restorePurchases)
+        let restorePurchasesController = makeRestorePurchasesController(restorePurchases)
 
         let spy = PaymentQueueSpy()
 
@@ -65,19 +65,19 @@ class RestorePurchasesControllerTests: XCTestCase {
 
         let productIdentifier1 = "com.SwiftyStoreKit.product1"
         let testProduct1 = TestProduct(productIdentifier: productIdentifier1)
-        let transaction1 = TestPaymentTransaction(payment: SKPayment(product: testProduct1), transactionState: .restored)
+        let transaction1 = TestPaymentTransaction(payment: SKPayment(product: testProduct1), transactionState: .Restored)
 
         let productIdentifier2 = "com.SwiftyStoreKit.product2"
         let testProduct2 = TestProduct(productIdentifier: productIdentifier2)
-        let transaction2 = TestPaymentTransaction(payment: SKPayment(product: testProduct2), transactionState: .restored)
+        let transaction2 = TestPaymentTransaction(payment: SKPayment(product: testProduct2), transactionState: .Restored)
 
         let productIdentifier3 = "com.SwiftyStoreKit.product3"
         let testProduct3 = TestProduct(productIdentifier: productIdentifier3)
-        let transaction3 = TestPaymentTransaction(payment: SKPayment(product: testProduct3), transactionState: .failed)
+        let transaction3 = TestPaymentTransaction(payment: SKPayment(product: testProduct3), transactionState: .Failed)
 
         let productIdentifier4 = "com.SwiftyStoreKit.product4"
         let testProduct4 = TestProduct(productIdentifier: productIdentifier4)
-        let transaction4 = TestPaymentTransaction(payment: SKPayment(product: testProduct4), transactionState: .purchased)
+        let transaction4 = TestPaymentTransaction(payment: SKPayment(product: testProduct4), transactionState: .Purchased)
 
         let transactions = [transaction1, transaction2, transaction3, transaction4]
 
@@ -86,20 +86,20 @@ class RestorePurchasesControllerTests: XCTestCase {
             callbackCalled = true
             XCTAssertEqual(results.count, 2)
             let first = results.first!
-            if case .restored(let restoredProduct) = first {
+            if case .Restored(let restoredProduct) = first {
                 XCTAssertEqual(restoredProduct.productId, productIdentifier1)
             } else {
                 XCTFail("expected restored callback with product")
             }
             let last = results.last!
-            if case .restored(let restoredProduct) = last {
+            if case .Restored(let restoredProduct) = last {
                 XCTAssertEqual(restoredProduct.productId, productIdentifier2)
             } else {
                 XCTFail("expected restored callback with product")
             }
         }
 
-        let restorePurchasesController = makeRestorePurchasesController(restorePurchases: restorePurchases)
+        let restorePurchasesController = makeRestorePurchasesController(restorePurchases)
 
         let spy = PaymentQueueSpy()
 
@@ -121,14 +121,14 @@ class RestorePurchasesControllerTests: XCTestCase {
 
             XCTAssertEqual(results.count, 1)
             let first = results.first!
-            if case .failed(_) = first {
+            if case .Failed(_) = first {
 
             } else {
                 XCTFail("expected failed callback with error")
             }
         }
 
-        let restorePurchasesController = makeRestorePurchasesController(restorePurchases: restorePurchases)
+        let restorePurchasesController = makeRestorePurchasesController(restorePurchases)
 
         let error = NSError(domain: "SwiftyStoreKit", code: 0, userInfo: nil)
 
@@ -145,7 +145,7 @@ class RestorePurchasesControllerTests: XCTestCase {
 
             XCTAssertEqual(results.count, 0)
         }
-        let restorePurchasesController = makeRestorePurchasesController(restorePurchases: restorePurchases)
+        let restorePurchasesController = makeRestorePurchasesController(restorePurchases)
 
         restorePurchasesController.restoreCompletedTransactionsFinished()
 

@@ -34,10 +34,12 @@ struct Payment: Hashable {
     var hashValue: Int {
         return product.productIdentifier.hashValue
     }
-    static func == (lhs: Payment, rhs: Payment) -> Bool {
-        return lhs.product.productIdentifier == rhs.product.productIdentifier
-    }
 }
+
+func == (lhs: Payment, rhs: Payment) -> Bool {
+  return lhs.product.productIdentifier == rhs.product.productIdentifier
+}
+
 
 class PaymentsController: TransactionController {
 
@@ -46,21 +48,21 @@ class PaymentsController: TransactionController {
     private func findPaymentIndex(withProductIdentifier identifier: String) -> Int? {
         for payment in payments {
             if payment.product.productIdentifier == identifier {
-                return payments.index(of: payment)
+                return payments.indexOf(payment)
             }
         }
         return nil
     }
 
-    func hasPayment(_ payment: Payment) -> Bool {
+    func hasPayment(payment: Payment) -> Bool {
         return findPaymentIndex(withProductIdentifier: payment.product.productIdentifier) != nil
     }
 
-    func append(_ payment: Payment) {
+    func append(payment: Payment) {
         payments.append(payment)
     }
 
-    func processTransaction(_ transaction: SKPaymentTransaction, on paymentQueue: PaymentQueue) -> Bool {
+    func processTransaction(transaction: SKPaymentTransaction, on paymentQueue: PaymentQueue) -> Bool {
 
         let transactionProductIdentifier = transaction.payment.productIdentifier
 
@@ -72,41 +74,41 @@ class PaymentsController: TransactionController {
 
         let transactionState = transaction.transactionState
 
-        if transactionState == .purchased {
+        if transactionState == .Purchased {
 
             let product = Product(productId: transactionProductIdentifier, transaction: transaction, needsFinishTransaction: !payment.atomically)
 
-            payment.callback(.purchased(product: product))
+            payment.callback(.Purchased(product: product))
 
             if payment.atomically {
                 paymentQueue.finishTransaction(transaction)
             }
-            payments.remove(at: paymentIndex)
+            payments.removeAtIndex(paymentIndex)
             return true
         }
-        if transactionState == .failed {
+        if transactionState == .Failed {
 
-            payment.callback(.failed(error: transactionError(for: transaction.error as NSError?)))
+            payment.callback(.Failed(error: transactionError(for: transaction.error as NSError?)))
 
             paymentQueue.finishTransaction(transaction)
-            payments.remove(at: paymentIndex)
+          payments.removeAtIndex(paymentIndex)
             return true
         }
 
-        if transactionState == .restored {
+        if transactionState == .Restored {
             print("Unexpected restored transaction for payment \(transactionProductIdentifier)")
         }
         return false
     }
 
-    func transactionError(for error: NSError?) -> SKError {
-        let message = "Unknown error"
-        let altError = NSError(domain: SKErrorDomain, code: SKError.unknown.rawValue, userInfo: [ NSLocalizedDescriptionKey: message ])
-        let nsError = error ?? altError
-        return SKError(_nsError: nsError)
+    func transactionError(for error: NSError?) -> SKErrorCode {
+      guard let err = error, let skError = SKErrorCode(rawValue: err.code) else {
+        return SKErrorCode.Unknown
+      }
+      return skError
     }
 
-    func processTransactions(_ transactions: [SKPaymentTransaction], on paymentQueue: PaymentQueue) -> [SKPaymentTransaction] {
+    func processTransactions(transactions: [SKPaymentTransaction], on paymentQueue: PaymentQueue) -> [SKPaymentTransaction] {
 
         return transactions.filter { !processTransaction($0, on: paymentQueue) }
     }

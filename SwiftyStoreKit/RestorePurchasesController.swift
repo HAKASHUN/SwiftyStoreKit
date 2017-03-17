@@ -30,7 +30,7 @@ struct RestorePurchases {
     let applicationUsername: String?
     let callback: ([TransactionResult]) -> Void
 
-    init(atomically: Bool, applicationUsername: String? = nil, callback: @escaping ([TransactionResult]) -> Void) {
+    init(atomically: Bool, applicationUsername: String? = nil, callback: ([TransactionResult]) -> Void) {
         self.atomically = atomically
         self.applicationUsername = applicationUsername
         self.callback = callback
@@ -39,15 +39,15 @@ struct RestorePurchases {
 
 class RestorePurchasesController: TransactionController {
 
-    public var restorePurchases: RestorePurchases?
+    internal var restorePurchases: RestorePurchases?
 
     private var restoredProducts: [TransactionResult] = []
 
-    func processTransaction(_ transaction: SKPaymentTransaction, atomically: Bool, on paymentQueue: PaymentQueue) -> Product? {
+    func processTransaction(transaction: SKPaymentTransaction, atomically: Bool, on paymentQueue: PaymentQueue) -> Product? {
 
         let transactionState = transaction.transactionState
 
-        if transactionState == .restored {
+        if transactionState == .Restored {
 
             let transactionProductIdentifier = transaction.payment.productIdentifier
 
@@ -60,7 +60,7 @@ class RestorePurchasesController: TransactionController {
         return nil
     }
 
-    func processTransactions(_ transactions: [SKPaymentTransaction], on paymentQueue: PaymentQueue) -> [SKPaymentTransaction] {
+    func processTransactions(transactions: [SKPaymentTransaction], on paymentQueue: PaymentQueue) -> [SKPaymentTransaction] {
 
         guard let restorePurchases = restorePurchases else {
             return transactions
@@ -69,7 +69,7 @@ class RestorePurchasesController: TransactionController {
         var unhandledTransactions: [SKPaymentTransaction] = []
         for transaction in transactions {
             if let restoredProduct = processTransaction(transaction, atomically: restorePurchases.atomically, on: paymentQueue) {
-                restoredProducts.append(.restored(product: restoredProduct))
+                restoredProducts.append(.Restored(product: restoredProduct))
             } else {
                 unhandledTransactions.append(transaction)
             }
@@ -78,13 +78,14 @@ class RestorePurchasesController: TransactionController {
         return unhandledTransactions
     }
 
-    func restoreCompletedTransactionsFailed(withError error: Error) {
+    func restoreCompletedTransactionsFailed(withError error: ErrorType) {
 
         guard let restorePurchases = restorePurchases else {
             print("Callback already called. Returning")
             return
         }
-        restoredProducts.append(.failed(error: SKError(_nsError: error as NSError)))
+        let skError = SKErrorCode(rawValue: (error as NSError).code) ?? .Unknown
+        restoredProducts.append(.Failed(error: skError))
         restorePurchases.callback(restoredProducts)
 
         // Reset state after error received

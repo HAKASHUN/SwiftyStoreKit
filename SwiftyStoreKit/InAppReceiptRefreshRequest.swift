@@ -29,13 +29,13 @@ import Foundation
 class InAppReceiptRefreshRequest: NSObject, SKRequestDelegate {
 
     enum ResultType {
-        case success
-        case error(e: Error)
+        case Success
+        case Error(e: ErrorType)
     }
 
     typealias RequestCallback = (ResultType) -> Void
 
-    class func refresh(_ receiptProperties: [String : Any]? = nil, callback: @escaping RequestCallback) -> InAppReceiptRefreshRequest {
+    class func refresh(receiptProperties: [String : AnyObject]? = nil, callback: RequestCallback) -> InAppReceiptRefreshRequest {
         let request = InAppReceiptRefreshRequest(receiptProperties: receiptProperties, callback: callback)
         request.start()
         return request
@@ -48,7 +48,7 @@ class InAppReceiptRefreshRequest: NSObject, SKRequestDelegate {
         refreshReceiptRequest.delegate = nil
     }
 
-    private init(receiptProperties: [String : Any]? = nil, callback: @escaping RequestCallback) {
+    private init(receiptProperties: [String : AnyObject]? = nil, callback: RequestCallback) {
         self.callback = callback
         self.refreshReceiptRequest = SKReceiptRefreshRequest(receiptProperties: receiptProperties)
         super.init()
@@ -59,18 +59,18 @@ class InAppReceiptRefreshRequest: NSObject, SKRequestDelegate {
         self.refreshReceiptRequest.start()
     }
 
-    func requestDidFinish(_ request: SKRequest) {
+    func requestDidFinish(request: SKRequest) {
         /*if let resoreRequest = request as? SKReceiptRefreshRequest {
          let receiptProperties = resoreRequest.receiptProperties ?? [:]
          for (k, v) in receiptProperties {
          print("\(k): \(v)")
          }
          }*/
-        callback(.success)
+        callback(.Success)
     }
-    func request(_ request: SKRequest, didFailWithError error: Error) {
+    func request(request: SKRequest, didFailWithError error: ErrorType) {
         // XXX could here check domain and error code to return typed exception
-        callback(.error(e: error))
+        callback(.Error(e: error))
     }
 
 }

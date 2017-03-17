@@ -28,11 +28,11 @@ import Foundation
 public struct AppleReceiptValidator: ReceiptValidator {
 
 	public enum VerifyReceiptURLType: String {
-		case production = "https://buy.itunes.apple.com/verifyReceipt"
-		case sandbox = "https://sandbox.itunes.apple.com/verifyReceipt"
+		case Production = "https://buy.itunes.apple.com/verifyReceipt"
+		case Sandbox = "https://sandbox.itunes.apple.com/verifyReceipt"
 	}
 
-	public init(service: VerifyReceiptURLType = .production) {
+	public init(service: VerifyReceiptURLType = .Production) {
 		self.service = service
 	}
 
@@ -41,11 +41,11 @@ public struct AppleReceiptValidator: ReceiptValidator {
 	public func validate(
 		receipt: String,
 		password autoRenewPassword: String? = nil,
-		completion: @escaping (VerifyReceiptResult) -> Void) {
+		completion: (VerifyReceiptResult) -> Void) {
 
-		let storeURL = URL(string: service.rawValue)! // safe (until no more)
-		let storeRequest = NSMutableURLRequest(url: storeURL)
-		storeRequest.httpMethod = "POST"
+    let storeURL = NSURL(string: service.rawValue)! // safe (until no more)
+    let storeRequest = NSMutableURLRequest(URL: storeURL)
+		storeRequest.HTTPMethod = "POST"
 
 		let requestContents: NSMutableDictionary = [ "receipt-data": receipt ]
 		// password if defined
@@ -55,31 +55,31 @@ public struct AppleReceiptValidator: ReceiptValidator {
 
 		// Encore request body
 		do {
-			storeRequest.httpBody = try JSONSerialization.data(withJSONObject: requestContents, options: [])
+      storeRequest.HTTPBody = try NSJSONSerialization.dataWithJSONObject(requestContents, options: [])
 		} catch let e {
-			completion(.error(error: .requestBodyEncodeError(error: e)))
+			completion(.Error(error: .RequestBodyEncodeError(error: e)))
 			return
 		}
 
 		// Remote task
-		let task = URLSession.shared.dataTask(with: storeRequest as URLRequest) { data, _, error -> Void in
+		let task = NSURLSession.sharedSession().dataTaskWithRequest(storeRequest) { data, _, error -> Void in
 
 			// there is an error
 			if let networkError = error {
-				completion(.error(error: .networkError(error: networkError)))
+				completion(.Error(error: .NetworkError(error: networkError)))
 				return
 			}
 
 			// there is no data
 			guard let safeData = data else {
-				completion(.error(error: .noRemoteData))
+				completion(.Error(error: .NoRemoteData))
 				return
 			}
 
 			// cannot decode data
-			guard let receiptInfo = try? JSONSerialization.jsonObject(with: data!, options: .mutableLeaves) as? ReceiptInfo ?? [:] else {
-				let jsonStr = String(data: safeData, encoding: String.Encoding.utf8)
-				completion(.error(error: .jsonDecodeError(string: jsonStr)))
+			guard let receiptInfo = try? NSJSONSerialization.JSONObjectWithData(data!, options: .MutableLeaves) as? ReceiptInfo ?? [:] else {
+        let jsonStr = String(data: safeData, encoding: NSUTF8StringEncoding)
+				completion(.Error(error: .JsonDecodeError(string: jsonStr)))
 				return
 			}
 
@@ -97,19 +97,19 @@ public struct AppleReceiptValidator: ReceiptValidator {
 				* Note: The 21007 status code indicates that this receipt is a sandbox receipt,
 				* but it was sent to the production service for verification.
 				*/
-				let receiptStatus = ReceiptStatus(rawValue: status) ?? ReceiptStatus.unknown
-				if case .testReceipt = receiptStatus {
-					let sandboxValidator = AppleReceiptValidator(service: .sandbox)
-					sandboxValidator.validate(receipt: receipt, password: autoRenewPassword, completion: completion)
+				let receiptStatus = ReceiptStatus(rawValue: status) ?? ReceiptStatus.Unknown
+				if case .TestReceipt = receiptStatus {
+					let sandboxValidator = AppleReceiptValidator(service: .Sandbox)
+					sandboxValidator.validate(receipt, password: autoRenewPassword, completion: completion)
 				} else {
 					if receiptStatus.isValid {
-						completion(.success(receipt: receiptInfo))
+						completion(.Success(receipt: receiptInfo))
 					} else {
-						completion(.error(error: .receiptInvalid(receipt: receiptInfo, status: receiptStatus)))
+						completion(.Error(error: .ReceiptInvalid(receipt: receiptInfo, status: receiptStatus)))
 					}
 				}
 			} else {
-				completion(.error(error: .receiptInvalid(receipt: receiptInfo, status: ReceiptStatus.none)))
+				completion(.Error(error: .ReceiptInvalid(receipt: receiptInfo, status: ReceiptStatus.None)))
 			}
 		}
 		task.resume()

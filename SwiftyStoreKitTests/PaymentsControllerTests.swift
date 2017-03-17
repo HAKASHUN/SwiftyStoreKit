@@ -30,7 +30,7 @@ class PaymentsControllerTests: XCTestCase {
 
     func testInsertPayment_hasPayment() {
 
-        let payment = makeTestPayment(productIdentifier: "com.SwiftyStoreKit.product1") { _ in }
+        let payment = makeTestPayment("com.SwiftyStoreKit.product1") { _ in }
 
         let paymentsController = makePaymentsController(appendPayments: [payment])
 
@@ -43,10 +43,10 @@ class PaymentsControllerTests: XCTestCase {
         let testProduct = TestProduct(productIdentifier: productIdentifier)
 
         var callbackCalled = false
-        let payment = makeTestPayment(product: testProduct) { result in
+        let payment = makeTestPayment(testProduct) { result in
 
             callbackCalled = true
-            if case .purchased(let product) = result {
+            if case .Purchased(let product) = result {
                 XCTAssertEqual(product.productId, productIdentifier)
             } else {
                 XCTFail("expected purchased callback with product id")
@@ -55,7 +55,7 @@ class PaymentsControllerTests: XCTestCase {
 
         let paymentsController = makePaymentsController(appendPayments: [payment])
 
-        let transaction = TestPaymentTransaction(payment: SKPayment(product: testProduct), transactionState: .purchased)
+        let transaction = TestPaymentTransaction(payment: SKPayment(product: testProduct), transactionState: .Purchased)
 
         let spy = PaymentQueueSpy()
 
@@ -76,10 +76,10 @@ class PaymentsControllerTests: XCTestCase {
         let testProduct = TestProduct(productIdentifier: productIdentifier)
 
         var callbackCalled = false
-        let payment = makeTestPayment(product: testProduct) { result in
+        let payment = makeTestPayment(testProduct) { result in
 
             callbackCalled = true
-            if case .failed(_) = result {
+            if case .Failed(_) = result {
 
             } else {
                 XCTFail("expected failed callback with error")
@@ -88,7 +88,7 @@ class PaymentsControllerTests: XCTestCase {
 
         let paymentsController = makePaymentsController(appendPayments: [payment])
 
-        let transaction = TestPaymentTransaction(payment: SKPayment(product: testProduct), transactionState: .failed)
+        let transaction = TestPaymentTransaction(payment: SKPayment(product: testProduct), transactionState: .Failed)
 
         let spy = PaymentQueueSpy()
 
@@ -109,10 +109,10 @@ class PaymentsControllerTests: XCTestCase {
         let testProduct1 = TestProduct(productIdentifier: productIdentifier)
 
         var callback1Called = false
-        let payment1 = makeTestPayment(product: testProduct1) { result in
+        let payment1 = makeTestPayment(testProduct1) { result in
 
             callback1Called = true
-            if case .purchased(let product) = result {
+            if case .Purchased(let product) = result {
                 XCTAssertEqual(product.productId, productIdentifier)
             } else {
                 XCTFail("expected purchased callback with product id")
@@ -122,9 +122,9 @@ class PaymentsControllerTests: XCTestCase {
         let testProduct2 = TestProduct(productIdentifier: productIdentifier)
 
         var callback2Called = false
-        let payment2 = makeTestPayment(product: testProduct2) { result in
+        let payment2 = makeTestPayment(testProduct2) { result in
             callback2Called = true
-            if case .failed(_) = result {
+            if case .Failed(_) = result {
 
             } else {
                 XCTFail("expected failed callback with error")
@@ -133,8 +133,8 @@ class PaymentsControllerTests: XCTestCase {
 
         let paymentsController = makePaymentsController(appendPayments: [payment1, payment2])
 
-        let transaction1 = TestPaymentTransaction(payment: SKPayment(product: testProduct1), transactionState: .purchased)
-        let transaction2 = TestPaymentTransaction(payment: SKPayment(product: testProduct2), transactionState: .failed)
+        let transaction1 = TestPaymentTransaction(payment: SKPayment(product: testProduct1), transactionState: .Purchased)
+        let transaction2 = TestPaymentTransaction(payment: SKPayment(product: testProduct2), transactionState: .Failed)
 
         let spy = PaymentQueueSpy()
 
@@ -157,10 +157,10 @@ class PaymentsControllerTests: XCTestCase {
         let testProduct1 = TestProduct(productIdentifier: productIdentifier)
 
         var callback1Called = false
-        let payment1 = makeTestPayment(product: testProduct1) { result in
+        let payment1 = makeTestPayment(testProduct1) { result in
 
             callback1Called = true
-            if case .purchased(let product) = result {
+            if case .Purchased(let product) = result {
                 XCTAssertEqual(product.productId, productIdentifier)
             } else {
                 XCTFail("expected purchased callback with product id")
@@ -168,14 +168,14 @@ class PaymentsControllerTests: XCTestCase {
         }
 
         let testProduct2 = TestProduct(productIdentifier: productIdentifier)
-        let payment2 = makeTestPayment(product: testProduct2) { _ in
+        let payment2 = makeTestPayment(testProduct2) { _ in
 
             XCTFail("unexpected callback for second payment")
         }
 
         let paymentsController = makePaymentsController(appendPayments: [payment1, payment2])
 
-        let transaction1 = TestPaymentTransaction(payment: SKPayment(product: testProduct1), transactionState: .purchased)
+        let transaction1 = TestPaymentTransaction(payment: SKPayment(product: testProduct1), transactionState: .Purchased)
 
         let spy = PaymentQueueSpy()
 
@@ -200,15 +200,15 @@ class PaymentsControllerTests: XCTestCase {
         return paymentsController
     }
 
-    func makeTestPayment(product: SKProduct, atomically: Bool = true, callback: @escaping (TransactionResult) -> Void) -> Payment {
+    func makeTestPayment(product: SKProduct, atomically: Bool = true, callback: (TransactionResult) -> Void) -> Payment {
 
         return Payment(product: product, atomically: atomically, applicationUsername: "", callback: callback)
     }
 
-    func makeTestPayment(productIdentifier: String, atomically: Bool = true, callback: @escaping (TransactionResult) -> Void) -> Payment {
+    func makeTestPayment(productIdentifier: String, atomically: Bool = true, callback: (TransactionResult) -> Void) -> Payment {
 
         let product = TestProduct(productIdentifier: productIdentifier)
-        return makeTestPayment(product: product, atomically: atomically, callback: callback)
+        return makeTestPayment(product, atomically: atomically, callback: callback)
 
     }
 }

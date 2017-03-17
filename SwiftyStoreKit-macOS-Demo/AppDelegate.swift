@@ -39,7 +39,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
             for product in products {
 
-                if product.transaction.transactionState == .purchased || product.transaction.transactionState == .restored {
+                if product.transaction.transactionState == .Purchased || product.transaction.transactionState == .Restored {
 
                     if product.needsFinishTransaction {
                         // Deliver content from server, then:
