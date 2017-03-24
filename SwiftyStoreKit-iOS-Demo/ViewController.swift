@@ -208,7 +208,7 @@ extension ViewController {
         } else if let invalidProductId = result.invalidProductIDs.first {
             return alertWithTitle("Could not retrieve product info", message: "Invalid product identifier: \(invalidProductId)")
         } else {
-            let errorString = (result.error as? NSError)?.localizedDescription ?? "Unknown error. Please contact support"
+            let errorString = result.error?.localizedDescription ?? "Unknown error. Please contact support"
             return alertWithTitle("Could not retrieve product info", message: errorString)
         }
     }

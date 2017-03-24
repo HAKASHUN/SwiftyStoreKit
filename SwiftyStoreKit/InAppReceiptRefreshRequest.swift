@@ -30,7 +30,7 @@ class InAppReceiptRefreshRequest: NSObject, SKRequestDelegate {
 
     enum ResultType {
         case Success
-        case Error(e: ErrorType)
+        case Error(e: NSError)
     }
 
     typealias RequestCallback = (ResultType) -> Void
@@ -68,7 +68,7 @@ class InAppReceiptRefreshRequest: NSObject, SKRequestDelegate {
          }*/
         callback(.Success)
     }
-    func request(request: SKRequest, didFailWithError error: ErrorType) {
+    func request(request: SKRequest, didFailWithError error: NSError) {
         // XXX could here check domain and error code to return typed exception
         callback(.Error(e: error))
     }

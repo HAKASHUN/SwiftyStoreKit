@@ -51,7 +51,7 @@ extension SKPaymentTransaction : PaymentTransaction { }
 public struct RetrieveResults {
     public let retrievedProducts: Set<SKProduct>
     public let invalidProductIDs: Set<String>
-    public let error: ErrorType?
+    public let error: NSError?
 }
 
 // Purchase result

@@ -67,7 +67,7 @@ class InAppProductQueryRequest: NSObject, SKProductsRequestDelegate {
 
     }
 
-    func request(request: SKRequest, didFailWithError error: ErrorType) {
+    func request(request: SKRequest, didFailWithError error: NSError) {
         callback(RetrieveResults(retrievedProducts: Set<SKProduct>(), invalidProductIDs: Set<String>(), error: error))
     }
 }

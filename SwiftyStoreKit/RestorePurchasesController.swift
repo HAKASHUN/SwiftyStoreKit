@@ -78,13 +78,13 @@ class RestorePurchasesController: TransactionController {
         return unhandledTransactions
     }
 
-    func restoreCompletedTransactionsFailed(withError error: ErrorType) {
+    func restoreCompletedTransactionsFailed(withError error: NSError) {
 
         guard let restorePurchases = restorePurchases else {
             print("Callback already called. Returning")
             return
         }
-        let skError = SKErrorCode(rawValue: (error as NSError).code) ?? .Unknown
+        let skError = SKErrorCode(rawValue: error.code) ?? .Unknown
         restoredProducts.append(.Failed(error: skError))
         restorePurchases.callback(restoredProducts)
 

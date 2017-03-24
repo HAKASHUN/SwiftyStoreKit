@@ -182,7 +182,7 @@ class PaymentQueueController: NSObject, SKPaymentTransactionObserver {
 
     }
 
-    func paymentQueue(queue: SKPaymentQueue, restoreCompletedTransactionsFailedWithError error: ErrorType) {
+    func paymentQueue(queue: SKPaymentQueue, restoreCompletedTransactionsFailedWithError error: NSError) {
 
         restorePurchasesController.restoreCompletedTransactionsFailed(withError: error)
     }
